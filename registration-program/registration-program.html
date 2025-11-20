@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Registration Program | Kendcey Jean</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body id="top">
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">
+                <a href="../index.html" style="text-decoration: none; color: inherit;">
+                    <span class="logo-text">Kendcey</span>
+                    <img src="../homepage/Red logo.png" alt="Kendcey Logo" class="logo-image">
+                </a>
+            </div>
+            <div class="hamburger">Menu</div>
+            <div class="nav-links">
+                <a href="../index.html">Home</a>
+                <a href="../index.html#projects">Projects</a>
+                <a href="../index.html#about">About</a>
+                <a href="../index.html#contact">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <section class="project-detail">
+        <div class="container">
+            <div class="project-header">
+                <h1>JavaScript Registration Program</h1>
+                <div class="project-tags">
+                    <span>JavaScript</span>
+                    <span>HTML5</span>
+                    <span>CSS3</span>
+                    <span>Web App</span>
+                </div>
+            </div>
+            <div class="project-hero">
+                <img src="logo.png" alt="JavaScript Project Logo" style="border:none;">
+            </div>
+            <div class="project-content">
+                <div class="project-links" style="margin-bottom: 2rem;">
+                    <a href="https://kendcey.github.io/EventTicket/" target="_blank" class="work-link">View Live</a>
+                </div>
+                <div class="project-section">
+                    <h2>Description</h2>
+                    <p>This project is a dynamic web-based ticket registration system for a DMWT alumni event. Users can select 1-3 tickets, see the total cost update instantly, and must complete their purchase within a 10-minute countdown. The system validates all inputs and provides clear feedback for a smooth user experience.</p>
+                    <ul>
+                        <li><strong>Countdown Timer:</strong> 10-minute limit to complete registration.</li>
+                        <li><strong>Ticket Selection:</strong> Choose 1-3 tickets, with live total calculation.</li>
+                        <li><strong>Validation:</strong> Checks for valid name, email, and ticket quantity.</li>
+                        <li><strong>Feedback:</strong> Highlights errors and confirms successful purchases.</li>
+                        <li><strong>Tech:</strong> HTML5, CSS3, JavaScript.</li>
+                    </ul>
+                </div>
+                <div class="project-section">
+                    <h2>JavaScript Code</h2>
+                    <pre><code><span style="color:#DC143C">// JavaScript for Registration Program</span>
+let timerInterval;
+let totalTime = 600; <span style="color:#DC143C">// 10 minutes in seconds</span>
+const ticketPrice = 5.50; <span style="color:#DC143C">// $5.00 + $0.50 processing fee</span>
+
+<span style="color:#DC143C">// Initialize timer</span>
+function initTimer() {
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+<span style="color:#DC143C">// Update the countdown timer</span>
+function updateTimer() {
+    totalTime--;
+    const minutes = Math.floor(totalTime / 60);
+    let seconds = totalTime % 60;
+    seconds = seconds < 10 ? `0${seconds}` : seconds;
+    
+    document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+
+    if (totalTime <= 0) {
+        clearInterval(timerInterval);
+        alert("Sorry, your time to complete the form has expired. Please click OK to try again.");
+        resetForm();
+        location.reload();
+    }
+}
+
+<span style="color:#DC143C">// Calculate the total cost based on ticket quantity</span>
+function calculateTotal() {
+    const ticketsInput = document.getElementById('tickets');
+    const tickets = parseInt(ticketsInput.value);
+    const totalElement = document.getElementById('total');
+    const ticketsError = document.getElementById('ticketsError');
+
+    if (isNaN(tickets) || tickets < 1 || tickets > 3) {
+        ticketsError.textContent = 'Please enter a number between 1-3';
+        ticketsInput.style.borderColor = 'red';
+        totalElement.textContent = '$0.00';
+    } else {
+        ticketsError.textContent = '';
+        ticketsInput.style.borderColor = '#ddd'; <span style="color:#DC143C">// Reset border color to default</span>
+        const total = tickets * ticketPrice;
+        totalElement.textContent = `$${total.toFixed(2)}`;
+    }
+}
+
+<span style="color:#DC143C">// Validate email format</span>
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+<span style="color:#DC143C">// Reset the registration form</span>
+function resetForm() {
+    document.getElementById('registrationForm').reset();
+    document.getElementById('total').textContent = '$0.00';
+    clearErrors();
+    window.scrollTo(0, 0);
+}
+
+<span style="color:#DC143C">// Clear all error messages</span>
+function clearErrors() {
+    document.querySelectorAll('.error-message').forEach(error => {
+        error.textContent = '';
+    });
+}
+
+<span style="color:#DC143C">// Complete the purchase and validate all fields</span>
+function completePurchase() {
+    const tickets = document.getElementById('tickets').value;
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    let isValid = true;
+
+    <span style="color:#DC143C">// Clear previous errors</span>
+    clearErrors();
+
+    <span style="color:#DC143C">// Validate tickets</span>
+    if (!tickets || isNaN(tickets) || tickets < 1 || tickets > 3) {
+        document.getElementById('ticketsError').textContent = 'Please enter a number between 1-3';
+        isValid = false;
+    }
+
+    <span style="color:#DC143C">// Validate name</span>
+    if (!name) {
+        document.getElementById('nameError').textContent = 'This field is required';
+        isValid = false;
+    }
+
+    <span style="color:#DC143C">// Validate email</span>
+    if (!email) {
+        document.getElementById('emailError').textContent = 'This field is required';
+        isValid = false;
+    } else if (!validateEmail(email)) {
+        document.getElementById('emailError').textContent = 'Please enter a valid email address';
+        isValid = false;
+    }
+
+    if (isValid) {
+        const total = document.getElementById('total').textContent;
+        clearInterval(timerInterval);
+        alert(`Thank you for your purchase! Your total is ${total}. Please allow 24 hours for electronic delivery.`);
+        resetForm();
+        initTimer(); <span style="color:#DC143C">// Restart timer for new transaction</span>
+    }
+}
+
+<span style="color:#DC143C">// Event listeners</span>
+document.getElementById('tickets').addEventListener('input', calculateTotal);
+window.onload = initTimer;
+</code></pre>
+                    <div style="margin-top: 1.5rem;">
+                        <a href="https://github.com/kendcey/EventTicket" target="_blank" class="work-link">Source Code</a>
+                    </div>
+                </div>
+            </div>
+            <div class="project-navigation">
+                <a href="../index.html#projects" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Projects
+                </a>
+                <a href="#top" class="back-link" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
+                    <i class="fas fa-arrow-up"></i> Top
+                </a>
+            </div>
+        </div>
+    </section>
+    <footer>
+        <div class="container">
+            <div class="contact-info">
+                <p><i class="fas fa-map-marker-alt"></i> NYC, New York</p>
+            </div>
+            <div class="social-links">
+                <a href="https://www.linkedin.com/in/kendcey/" target="_blank"><i class="fab fa-linkedin"></i></a>
+                <a href="https://github.com/kendcey" target="_blank"><i class="fab fa-github"></i></a>
+                <a href="https://www.instagram.com/_kendcey/" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="https://kendcey.com" target="_blank"><i class="fas fa-globe"></i></a>
+            </div>
+            <p class="copyright">&copy; 2025 Kendcey W. Jean. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="../script.js"></script>
+</body>
+</html> 
