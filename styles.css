@@ -1,3 +1,12 @@
+/* CSS Variables */
+:root {
+    --primary-color: black;
+    --text-color: #000000;
+    --secondary-color: #555;
+    --body-font: 'Space Grotesk', sans-serif;
+    --accent-blue: #3498db;
+}
+
 /* Global Styles */
 html {
     font-family: 'Space Grotesk', sans-serif;
@@ -30,6 +39,7 @@ body.no-scroll {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    position: relative;
 }
 
 .section {
@@ -348,20 +358,58 @@ h2 {
 
 
 
-#projects {
+section#projects.section {
     border-bottom: 1px solid black;
     background-color: #BEBAB8;
-
+    padding: 50px 0 90px 0 !important;
 }
 
 #about {
     border-bottom: 1px solid black;
+    padding-bottom: 50px !important;
 }
 
 .about-content {
     border-bottom: 1px solid black;
     padding-bottom: 50px;
     margin-bottom: 50px;
+    position: relative;
+}
+
+.about-content p {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.vertical-lines-container {
+    position: absolute;
+    width: 100%;
+    height: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 0 0 5px 5px;
+    transition: height 0.3s ease;
+}
+
+.revealed-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    object-fit: cover;
+    object-position: center top;
+    opacity: 0;
+    transition: opacity 0.3s ease, width 0.3s ease, height 0.3s ease;
+    border-radius: 0 0 5px 5px;
+    border: 1px solid black;
+    border-top: none;
+    margin: 0;
+    padding: 0;
+    display: block;
 }
 
 #about .container h2:nth-of-type(2) {
@@ -421,12 +469,14 @@ h2 {
     }
     
 
-    #projects {
+    section#projects.section {
         border-bottom: 1px solid black;
+        padding: 50px 0 90px 0 !important;
     }
 
     #about {
         border-bottom: 1px solid black;
+        padding-bottom: 50px !important;
     }
 
     .about-content {
@@ -793,6 +843,7 @@ h2 {
     border: 1px solid black;
     font-size: 0.9rem;
     font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
 /* Education Section */
@@ -835,6 +886,8 @@ h2 {
 .education-item ul li {
     margin-bottom: 0.5rem;
     color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    line-height: 1.6;
 }
 
 .certifications-grid {
@@ -867,6 +920,8 @@ h2 {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    line-height: 1.6;
 }
 
 .certification-item ul li:before {
@@ -1193,6 +1248,8 @@ footer .container {
 .experience-item ul li {
     margin-bottom: 0.5rem;
     color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    line-height: 1.6;
 }
 
 .resume-actions {
@@ -1223,11 +1280,14 @@ div[style*="display: flex"] .resume-btn {
     width: auto !important;
     margin: 0 !important;
     max-width: none !important;
-    padding: 5px 12px !important;
+    padding: 12px 25px !important;
     font-size: 0.9rem !important;
     border: none !important;
     background-color: black !important;
     color: #E0DFDE !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
 }
 
 .resume-header .resume-btn:hover,
@@ -1348,6 +1408,7 @@ div[style*="display: flex"] .resume-btn:hover {
     color: #555;
     margin-bottom: 20px;
     line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
 .work-tags {
@@ -1365,6 +1426,7 @@ div[style*="display: flex"] .resume-btn:hover {
     font-size: 0.9rem;
     font-weight: 500;
     border: 1px solid black;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
 .work-link {
@@ -1444,6 +1506,7 @@ div[style*="display: flex"] .resume-btn:hover {
     font-size: 0.9rem;
     font-weight: 500;
     border: 1px solid black;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
 .project-hero {
@@ -1484,7 +1547,7 @@ div[style*="display: flex"] .resume-btn:hover {
 }
 
 .project-section:last-of-type {
-    margin-bottom: 50px;
+    margin-bottom: 200px;
 }
 
 .project-content > .project-section:not(:first-of-type) {
@@ -1501,6 +1564,7 @@ div[style*="display: flex"] .resume-btn:hover {
     color: #555;
     line-height: 1.6;
     margin-bottom: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
 .project-section ul,
@@ -1513,6 +1577,7 @@ div[style*="display: flex"] .resume-btn:hover {
 
 .project-section li {
     margin-bottom: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
 .project-navigation {
@@ -1534,6 +1599,7 @@ div[style*="display: flex"] .resume-btn:hover {
     text-decoration: none;
     font-weight: 500;
     transition: color 0.3s ease;
+    vertical-align: middle;
 }
 
 .back-link:hover {

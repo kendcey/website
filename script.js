@@ -351,3 +351,114 @@ if (backToTopBtn) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
+
+// Image reveal animation
+const verticalLinesContainer = document.getElementById('verticalLines');
+const aboutContent = document.querySelector('.about-content');
+const revealedImage = document.getElementById('revealedImage');
+
+if (verticalLinesContainer && aboutContent && revealedImage) {
+    let ticking = false;
+    let initialBorderBottom = null;
+    let initialAboutLeft = null;
+    let initialAboutRight = null;
+    let initialScrollY = null;
+    
+    function updateImageReveal() {
+        const scrollY = window.scrollY || window.pageYOffset;
+        const aboutRect = aboutContent.getBoundingClientRect();
+        const container = aboutContent.closest('.container');
+        
+        if (!container) return;
+        
+        const containerRect = container.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        
+        // Store initial scroll position on first run
+        if (initialScrollY === null) {
+            initialScrollY = scrollY;
+            initialBorderBottom = aboutRect.bottom + scrollY;
+        }
+        
+        // Get the border bottom position (where the top horizontal line is)
+        const borderBottomY = aboutRect.bottom;
+        
+        // Calculate when to start animation (when border is in viewport)
+        // Start growing when border is at viewport center or above
+        const viewportCenter = windowHeight * 0.5;
+        const distanceFromCenter = viewportCenter - borderBottomY;
+        
+        // Calculate image height based on scroll
+        // Image grows downward as you scroll down past the border
+        const maxHeight = 600;
+        let imageHeight = 0;
+        
+        if (borderBottomY < viewportCenter) {
+            // Border has passed viewport center, start growing
+            const growthDistance = Math.abs(distanceFromCenter);
+            imageHeight = Math.min(maxHeight, growthDistance);
+        }
+        
+        // Calculate the width (same as about-content width, minus 2px to account for border)
+        const imageWidth = (aboutRect.right - aboutRect.left) - 2;
+        const leftPosition = aboutRect.left - containerRect.left;
+        
+        // Position container to start exactly at the border-bottom of about-content
+        // The border is 1px, so we position the container right at the border edge
+        const containerTop = aboutRect.bottom - containerRect.top;
+        verticalLinesContainer.style.top = `${containerTop}px`;
+        
+        // Set container height to match image height (plus 1px for bottom border)
+        verticalLinesContainer.style.height = imageHeight > 0 ? `${imageHeight + 1}px` : '0px';
+        
+        // Position and size the revealed image
+        // Make sure image top is flush with the horizontal line (top: 0 in container)
+        if (imageHeight > 0) {
+            revealedImage.style.opacity = '1';
+            revealedImage.style.left = `${leftPosition}px`;
+            revealedImage.style.width = `${imageWidth}px`;
+            revealedImage.style.height = `${imageHeight}px`;
+            revealedImage.style.top = '0px';
+            revealedImage.style.marginTop = '0px';
+        } else {
+            revealedImage.style.opacity = '0';
+            revealedImage.style.height = '0px';
+            revealedImage.style.top = '0px';
+        }
+        
+        // Translate the container down as you scroll to keep it together
+        const currentBorderBottom = aboutRect.bottom + scrollY;
+        const scrollDistanceFromInitial = currentBorderBottom - initialBorderBottom;
+        
+        // Translate down to keep image aligned with border
+        if (imageHeight > 0) {
+            verticalLinesContainer.style.transform = `translateY(${scrollDistanceFromInitial}px)`;
+        } else {
+            verticalLinesContainer.style.transform = 'translateY(0)';
+        }
+        
+        ticking = false;
+    }
+    
+    function requestTick() {
+        if (!ticking) {
+            window.requestAnimationFrame(updateImageReveal);
+            ticking = true;
+        }
+    }
+    
+    // Initial update
+    updateImageReveal();
+    
+    // Update on scroll
+    window.addEventListener('scroll', requestTick, { passive: true });
+    
+    // Update on resize
+    window.addEventListener('resize', () => {
+        initialBorderBottom = null;
+        initialAboutLeft = null;
+        initialAboutRight = null;
+        initialScrollY = null;
+        requestTick();
+    });
+}
