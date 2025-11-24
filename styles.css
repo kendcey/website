@@ -16,6 +16,7 @@ html {
     background-color: #E0DFDE;
     color: #333;
     scroll-behavior: smooth;
+    scroll-snap-type: y proximity;
     overflow-y: auto; /* Allow html to scroll to accommodate content outside wrapper */
     overflow-x: hidden;
     width: 100%; /* Ensure html takes full width */
@@ -362,17 +363,20 @@ section#projects.section {
     border-bottom: 1px solid black;
     background-color: #BEBAB8;
     padding: 50px 0 90px 0 !important;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 
 #about {
     border-bottom: 1px solid black;
     padding-bottom: 50px !important;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 
 .about-content {
-    border-bottom: 1px solid black;
     padding-bottom: 50px;
-    margin-bottom: 50px;
+    margin-bottom: 0;
     position: relative;
 }
 
@@ -382,34 +386,65 @@ section#projects.section {
     line-height: 1.6;
 }
 
-.vertical-lines-container {
-    position: absolute;
+.about-image-square {
     width: 100%;
-    height: 0;
-    left: 0;
-    right: 0;
-    pointer-events: none;
+    max-width: 600px;
+    aspect-ratio: 1;
+    border: 1px solid black;
+    border-radius: 10px;
+    margin: 0 auto 50px auto;
+    background-color: #E0DFDE;
     overflow: hidden;
-    border-radius: 0 0 5px 5px;
-    transition: height 0.3s ease;
+    position: relative;
 }
 
-.revealed-image {
+/* Responsive sizing for larger screens */
+@media (min-width: 1200px) {
+    .about-image-square {
+        max-width: 500px;
+    }
+}
+
+@media (min-width: 1600px) {
+    .about-image-square {
+        max-width: 450px;
+    }
+}
+
+.about-images-slider {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 0;
+    will-change: transform;
+    /* No CSS transition - JavaScript handles animation */
+}
+
+.image-slide {
+    width: 100%;
+    aspect-ratio: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.about-image-square .about-image {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     object-position: center top;
-    opacity: 0;
-    transition: opacity 0.3s ease, width 0.3s ease, height 0.3s ease;
-    border-radius: 0 0 5px 5px;
-    border: 1px solid black;
-    border-top: none;
+    display: block;
     margin: 0;
     padding: 0;
-    display: block;
+    vertical-align: top;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.image-divider {
+    width: 100%;
+    height: 1px;
+    background-color: black;
 }
 
 #about .container h2:nth-of-type(2) {
@@ -438,6 +473,8 @@ section#projects.section {
 #contact {
     background-color: #BEBAB8; /* Replace with your desired color */
     padding-bottom: 0 !important; /* Remove bottom padding */
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 
 /* Special case for line above projects on larger screens */
@@ -480,9 +517,56 @@ section#projects.section {
     }
 
     .about-content {
-        border-bottom: 1px solid black;
         padding-bottom: 50px;
+        margin-bottom: 0;
+    }
+
+    .about-image-square {
+        width: 100%;
+        aspect-ratio: 1;
+        border: 1px solid black;
+        border-radius: 10px;
         margin-bottom: 50px;
+        margin-top: 0;
+        background-color: #E0DFDE;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .about-images-slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        will-change: transform;
+        /* No CSS transition - JavaScript handles animation */
+    }
+
+    .image-slide {
+        width: 100%;
+        aspect-ratio: 1;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .about-image-square .about-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+        display: block;
+        margin: 0;
+        padding: 0;
+        vertical-align: top;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .image-divider {
+        width: 100%;
+        height: 1px;
+        background-color: black;
     }
 
     #about .container h2:nth-of-type(2) {
@@ -927,6 +1011,17 @@ section#projects.section {
 .certification-item ul li:before {
     content: "•";
     color: var(--primary-color);
+}
+
+.certification-link {
+    color: var(--accent-blue);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.certification-link:hover {
+    color: #2980b9;
+    text-decoration: underline;
 }
 
 @media (max-width: 768px) {

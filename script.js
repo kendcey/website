@@ -121,6 +121,11 @@ if (hamburger && navLinks && navbar) {
     });
 }
 
+// Initialize EmailJS
+(function() {
+    emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your EmailJS public key
+})();
+
 // Handle contact form submission
 const contactForm = document.querySelector('.contact-form');
 const successMessage = document.getElementById('successMessage');
@@ -139,7 +144,6 @@ if (contactForm) {
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
         const messageInput = document.getElementById('message');
-        const replyToInput = contactForm.querySelector('input[name="_replyto"]');
 
         const name = nameInput.value.trim();
         const email = emailInput.value.trim();
@@ -158,29 +162,23 @@ if (contactForm) {
             return;
         }
 
-        // Set reply-to email
-        if (replyToInput) {
-            replyToInput.value = email;
-        }
-
         // Show loading state
         const sendButton = contactForm.querySelector('.send-button');
         const originalButtonText = sendButton.textContent;
         sendButton.textContent = 'Sending...';
         sendButton.disabled = true;
 
-        // Create FormData and submit via fetch
-        const formData = new FormData(contactForm);
-        
-        fetch(contactForm.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
-            if (response.ok) {
+        // EmailJS template parameters
+        const templateParams = {
+            from_name: name,
+            from_email: email,
+            message: message,
+            to_email: 'kendcey@icloud.com'
+        };
+
+        // Send email using EmailJS
+        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+            .then(function(response) {
                 // Display success message
                 successMessage.textContent = 'Message sent successfully!';
                 successMessage.classList.add('show');
@@ -199,25 +197,22 @@ if (contactForm) {
                     successMessage.classList.remove('show');
                     successMessage.textContent = '';
                 }, 5000);
-            } else {
-                throw new Error('Form submission failed');
-            }
-        })
-        .catch(error => {
-            // Display error message
-            errorMessage.textContent = 'Failed to send message. Please try again or contact directly at kendcey@icloud.com';
-            errorMessage.classList.add('show');
+            })
+            .catch(function(error) {
+                // Display error message
+                errorMessage.textContent = 'Failed to send message. Please try again or contact directly at kendcey@icloud.com';
+                errorMessage.classList.add('show');
 
-            // Reset button
-            sendButton.textContent = originalButtonText;
-            sendButton.disabled = false;
+                // Reset button
+                sendButton.textContent = originalButtonText;
+                sendButton.disabled = false;
 
-            // Hide message after 5 seconds
-            setTimeout(() => {
-                errorMessage.classList.remove('show');
-                errorMessage.textContent = '';
-            }, 5000);
-        });
+                // Hide message after 5 seconds
+                setTimeout(() => {
+                    errorMessage.classList.remove('show');
+                    errorMessage.textContent = '';
+                }, 5000);
+            });
     });
 }
 
@@ -352,113 +347,328 @@ if (backToTopBtn) {
     });
 }
 
-// Image reveal animation
-const verticalLinesContainer = document.getElementById('verticalLines');
-const aboutContent = document.querySelector('.about-content');
-const revealedImage = document.getElementById('revealedImage');
+// Scroll-locked image slider within the about-image-square
+const aboutImageSquare = document.querySelector('.about-image-square');
+const aboutImagesSlider = document.querySelector('.about-images-slider');
+const aboutSection = document.getElementById('about');
 
-if (verticalLinesContainer && aboutContent && revealedImage) {
-    let ticking = false;
-    let initialBorderBottom = null;
-    let initialAboutLeft = null;
-    let initialAboutRight = null;
-    let initialScrollY = null;
+if (aboutImageSquare && aboutImagesSlider && aboutSection) {
+    const imageSlides = document.querySelectorAll('.image-slide');
+    const numImages = imageSlides.length;
+    let isLocked = false;
+    let scrollDelta = 0;
+    let currentProgress = 0;
+    let targetProgress = 0;
+    let isCentering = false;
+    let rafId = null;
+    let lastScrollTime = 0;
     
-    function updateImageReveal() {
-        const scrollY = window.scrollY || window.pageYOffset;
-        const aboutRect = aboutContent.getBoundingClientRect();
-        const container = aboutContent.closest('.container');
-        
-        if (!container) return;
-        
-        const containerRect = container.getBoundingClientRect();
+    // Responsive scroll sensitivity based on screen size
+    function getScrollSensitivity() {
+        const isMobile = window.innerWidth <= 768;
+        return isMobile ? 1.5 : 1.2; // More sensitive on mobile
+    }
+    
+    function getScrollThreshold() {
+        const isMobile = window.innerWidth <= 768;
+        return isMobile ? 1200 : 1500; // Lower threshold on mobile
+    }
+    
+    // Responsive center threshold based on screen size
+    function getCenterThreshold() {
         const windowHeight = window.innerHeight;
-        
-        // Store initial scroll position on first run
-        if (initialScrollY === null) {
-            initialScrollY = scrollY;
-            initialBorderBottom = aboutRect.bottom + scrollY;
-        }
-        
-        // Get the border bottom position (where the top horizontal line is)
-        const borderBottomY = aboutRect.bottom;
-        
-        // Calculate when to start animation (when border is in viewport)
-        // Start growing when border is at viewport center or above
-        const viewportCenter = windowHeight * 0.5;
-        const distanceFromCenter = viewportCenter - borderBottomY;
-        
-        // Calculate image height based on scroll
-        // Image grows downward as you scroll down past the border
-        const maxHeight = 600;
-        let imageHeight = 0;
-        
-        if (borderBottomY < viewportCenter) {
-            // Border has passed viewport center, start growing
-            const growthDistance = Math.abs(distanceFromCenter);
-            imageHeight = Math.min(maxHeight, growthDistance);
-        }
-        
-        // Calculate the width (same as about-content width, minus 2px to account for border)
-        const imageWidth = (aboutRect.right - aboutRect.left) - 2;
-        const leftPosition = aboutRect.left - containerRect.left;
-        
-        // Position container to start exactly at the border-bottom of about-content
-        // The border is 1px, so we position the container right at the border edge
-        const containerTop = aboutRect.bottom - containerRect.top;
-        verticalLinesContainer.style.top = `${containerTop}px`;
-        
-        // Set container height to match image height (plus 1px for bottom border)
-        verticalLinesContainer.style.height = imageHeight > 0 ? `${imageHeight + 1}px` : '0px';
-        
-        // Position and size the revealed image
-        // Make sure image top is flush with the horizontal line (top: 0 in container)
-        if (imageHeight > 0) {
-            revealedImage.style.opacity = '1';
-            revealedImage.style.left = `${leftPosition}px`;
-            revealedImage.style.width = `${imageWidth}px`;
-            revealedImage.style.height = `${imageHeight}px`;
-            revealedImage.style.top = '0px';
-            revealedImage.style.marginTop = '0px';
-        } else {
-            revealedImage.style.opacity = '0';
-            revealedImage.style.height = '0px';
-            revealedImage.style.top = '0px';
-        }
-        
-        // Translate the container down as you scroll to keep it together
-        const currentBorderBottom = aboutRect.bottom + scrollY;
-        const scrollDistanceFromInitial = currentBorderBottom - initialBorderBottom;
-        
-        // Translate down to keep image aligned with border
-        if (imageHeight > 0) {
-            verticalLinesContainer.style.transform = `translateY(${scrollDistanceFromInitial}px)`;
-        } else {
-            verticalLinesContainer.style.transform = 'translateY(0)';
-        }
-        
-        ticking = false;
+        const isMobile = window.innerWidth <= 768;
+        // Use very small threshold for precise centering
+        return isMobile ? Math.max(8, windowHeight * 0.015) : Math.max(5, windowHeight * 0.01);
     }
     
-    function requestTick() {
-        if (!ticking) {
-            window.requestAnimationFrame(updateImageReveal);
-            ticking = true;
+    const SMOOTH_FACTOR = 0.15;
+    
+    function getSlideHeight() {
+        return aboutImageSquare.offsetHeight;
+    }
+    
+    function getTotalHeight() {
+        const slideHeight = getSlideHeight();
+        return slideHeight * numImages + (numImages - 1) - 7; // Subtract 7px to fix bottom spacing
+    }
+    
+    function snapToImage(progress) {
+        // Calculate snap points for each image
+        const snapPoints = [];
+        for (let i = 0; i < numImages; i++) {
+            snapPoints.push(i / (numImages - 1));
+        }
+        
+        // Find nearest snap point
+        let nearestSnap = progress;
+        let minDistance = Infinity;
+        
+        for (let snapPoint of snapPoints) {
+            const distance = Math.abs(progress - snapPoint);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestSnap = snapPoint;
+            }
+        }
+        
+        // Light snap: only snap if close enough (within 15% of image distance)
+        const snapThreshold = 1 / (numImages * 2) * 0.5; // 50% of half the distance between images
+        if (minDistance < snapThreshold) {
+            // Smoothly interpolate towards snap point
+            const snapStrength = 0.5; // Stronger snap strength
+            return progress + (nearestSnap - progress) * snapStrength;
+        }
+        
+        return progress;
+    }
+    
+    function updateImageSlider(progress, immediate = false) {
+        targetProgress = Math.max(0, Math.min(1, progress));
+        
+        // Apply light snap effect
+        if (!immediate) {
+            targetProgress = snapToImage(targetProgress);
+        }
+        
+        if (immediate) {
+            currentProgress = targetProgress;
+        } else {
+            // Smooth interpolation for snappy feel
+            currentProgress += (targetProgress - currentProgress) * SMOOTH_FACTOR;
+            
+            // Stop animation when close enough
+            if (Math.abs(targetProgress - currentProgress) < 0.001) {
+                currentProgress = targetProgress;
+            }
+        }
+        
+        const slideHeight = getSlideHeight();
+        const totalHeight = getTotalHeight();
+        const maxTranslate = totalHeight - slideHeight;
+        const translateY = currentProgress * maxTranslate;
+        
+        aboutImagesSlider.style.transform = `translateY(-${translateY}px)`;
+        
+        return {
+            isAtStart: currentProgress <= 0.001,
+            isAtEnd: currentProgress >= 0.999
+        };
+    }
+    
+    function animateSlider() {
+        if (isLocked) {
+            updateImageSlider(targetProgress);
+            rafId = requestAnimationFrame(animateSlider);
         }
     }
     
-    // Initial update
-    updateImageReveal();
+    function lockScroll() {
+        if (!isLocked) {
+            isLocked = true;
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            const threshold = getScrollThreshold();
+            const sensitivity = getScrollSensitivity();
+            scrollDelta = currentProgress * threshold / sensitivity;
+            rafId = requestAnimationFrame(animateSlider);
+        }
+    }
     
-    // Update on scroll
-    window.addEventListener('scroll', requestTick, { passive: true });
+    function unlockScroll() {
+        if (isLocked) {
+            isLocked = false;
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+        }
+    }
     
-    // Update on resize
+    function checkIfCentered() {
+        const imageSquareRect = aboutImageSquare.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const squareHeight = imageSquareRect.height;
+        const squareTop = imageSquareRect.top;
+        const targetTop = (windowHeight - squareHeight) / 2;
+        const threshold = getCenterThreshold();
+        const distanceFromCenter = Math.abs(squareTop - targetTop);
+        
+        // Only return true if very close to center (stricter threshold)
+        return distanceFromCenter < threshold;
+    }
+    
+    function handleWheel(e) {
+        const now = Date.now();
+        const imageSquareRect = aboutImageSquare.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const squareTop = imageSquareRect.top;
+        const squareBottom = imageSquareRect.bottom;
+        const isInViewport = squareTop < windowHeight && squareBottom > 0;
+        
+        // If not in viewport and locked, unlock
+        if (!isInViewport) {
+            if (isLocked) {
+                unlockScroll();
+            }
+            return;
+        }
+        
+        // Throttle wheel events slightly
+        if (now - lastScrollTime < 8) {
+            return;
+        }
+        lastScrollTime = now;
+        
+        const centered = checkIfCentered();
+        
+        // If centered but not locked, lock it (no auto-centering)
+        if (centered && !isLocked) {
+            lockScroll();
+            const threshold = getScrollThreshold();
+            const sensitivity = getScrollSensitivity();
+            scrollDelta = currentProgress * threshold / sensitivity;
+        }
+        
+        // If locked, handle image movement
+        if (isLocked) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const delta = e.deltaY || 0;
+            const threshold = getScrollThreshold();
+            const sensitivity = getScrollSensitivity();
+            scrollDelta += delta;
+            
+            // Calculate target progress
+            const newProgress = Math.max(0, Math.min(1, (scrollDelta * sensitivity) / threshold));
+            updateImageSlider(newProgress, false);
+            
+            const state = {
+                isAtStart: newProgress <= 0.001,
+                isAtEnd: newProgress >= 0.999
+            };
+            
+            // Check if we should unlock
+            if (delta > 0 && state.isAtEnd) {
+                // Scrolling down and at end
+                unlockScroll();
+                const extraScroll = Math.max(0, (scrollDelta * sensitivity - threshold) / sensitivity);
+                if (extraScroll > 10) {
+                    setTimeout(() => {
+                        window.scrollBy(0, extraScroll);
+                    }, 50);
+                }
+            } else if (delta < 0 && state.isAtStart) {
+                // Scrolling up and at start
+                unlockScroll();
+                const extraScroll = Math.min(0, scrollDelta * sensitivity / sensitivity);
+                if (extraScroll < -10) {
+                    setTimeout(() => {
+                        window.scrollBy(0, extraScroll);
+                    }, 50);
+                }
+            }
+        }
+    }
+    
+    // Handle wheel events
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    
+    // Handle touch events for mobile
+    let touchStartY = 0;
+    let touchStartScrollDelta = 0;
+    let touchStartTime = 0;
+    
+    window.addEventListener('touchstart', (e) => {
+        const imageSquareRect = aboutImageSquare.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const isInViewport = imageSquareRect.top < windowHeight && imageSquareRect.bottom > 0;
+        
+        if (isInViewport) {
+            const centered = checkIfCentered();
+            if (centered && !isLocked) {
+                lockScroll();
+                const threshold = getScrollThreshold();
+                const sensitivity = getScrollSensitivity();
+                scrollDelta = currentProgress * threshold / sensitivity;
+            }
+            
+            if (isLocked) {
+                touchStartY = e.touches[0].clientY;
+                touchStartScrollDelta = scrollDelta;
+                touchStartTime = Date.now();
+            }
+        }
+    }, { passive: true });
+    
+    window.addEventListener('touchmove', (e) => {
+        if (isLocked) {
+            e.preventDefault();
+            const touchCurrentY = e.touches[0].clientY;
+            const delta = touchStartY - touchCurrentY;
+            const threshold = getScrollThreshold();
+            const sensitivity = getScrollSensitivity();
+            scrollDelta = touchStartScrollDelta + (delta * 2);
+            
+            const newProgress = Math.max(0, Math.min(1, (scrollDelta * sensitivity) / threshold));
+            updateImageSlider(newProgress, false);
+            
+            const state = {
+                isAtStart: newProgress <= 0.001,
+                isAtEnd: newProgress >= 0.999
+            };
+            
+            if (state.isAtEnd || state.isAtStart) {
+                unlockScroll();
+            }
+            
+            touchStartY = touchCurrentY;
+            touchStartScrollDelta = scrollDelta;
+        }
+    }, { passive: false });
+    
+    // Initialize - show first image
+    updateImageSlider(0, true);
+    
+    // Check on scroll to lock when naturally centered
+    let scrollCheckTimeout = null;
+    let lastScrollDirection = 0;
+    window.addEventListener('scroll', () => {
+        if (isLocked) return;
+        
+        // Track scroll direction
+        const currentScrollY = window.scrollY || window.pageYOffset;
+        const scrollDeltaY = currentScrollY - (window.lastScrollY || currentScrollY);
+        window.lastScrollY = currentScrollY;
+        lastScrollDirection = scrollDeltaY;
+        
+        // Debounce scroll checks
+        clearTimeout(scrollCheckTimeout);
+        scrollCheckTimeout = setTimeout(() => {
+            const imageSquareRect = aboutImageSquare.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const isInViewport = imageSquareRect.top < windowHeight && imageSquareRect.bottom > 0;
+            
+            if (isInViewport) {
+                const centered = checkIfCentered();
+                // Only lock if centered AND has been stable (not actively scrolling past)
+                if (centered && !isLocked && Math.abs(lastScrollDirection) < 1) {
+                    lockScroll();
+                    const threshold = getScrollThreshold();
+                    const sensitivity = getScrollSensitivity();
+                    scrollDelta = currentProgress * threshold / sensitivity;
+                }
+            }
+        }, 100); // Increased debounce for more stability
+    }, { passive: true });
+    
     window.addEventListener('resize', () => {
-        initialBorderBottom = null;
-        initialAboutLeft = null;
-        initialAboutRight = null;
-        initialScrollY = null;
-        requestTick();
+        if (isLocked) {
+            updateImageSlider(targetProgress, true);
+        }
     });
 }
+

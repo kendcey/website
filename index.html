@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body id="top">
     <nav class="navbar">
@@ -128,8 +129,24 @@
                 <p>I'm a digital media specialist and project manager with a unique blend of creative and analytical skills. My expertise spans from strategic project management to digital design, allowing me to create impactful solutions that bridge the gap between technology and user experience. I combine my background in computer science with creative design to deliver innovative digital solutions.</p>
             </div>
 
-            <div class="vertical-lines-container" id="verticalLines">
-                <img src="homepage/image333.png" alt="Revealed Image" class="revealed-image" id="revealedImage">
+            <div class="about-image-square">
+                <div class="about-images-slider">
+                    <div class="image-slide">
+                        <img src="homepage/about-images/img1.png" alt="About Image" class="about-image">
+                    </div>
+                    <div class="image-divider"></div>
+                    <div class="image-slide">
+                        <img src="homepage/about-images/img2.png" alt="About Image" class="about-image">
+                    </div>
+                    <div class="image-divider"></div>
+                    <div class="image-slide">
+                        <img src="homepage/about-images/img3.png" alt="About Image" class="about-image">
+                    </div>
+                    <div class="image-divider"></div>
+                    <div class="image-slide">
+                        <img src="homepage/about-images/img4.png" alt="About Image" class="about-image">
+                    </div>
+                </div>
             </div>
 
             <h2>Skills</h2>
@@ -203,10 +220,7 @@
         <div class="container">
             <h2>Contact</h2>
             <div class="contact-form-container">
-                <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" class="contact-form">
-                    <input type="hidden" name="_to" value="kendcey@icloud.com">
-                    <input type="hidden" name="_subject" value="New Contact Form Submission">
-                    <input type="hidden" name="_replyto" value="">
+                <form class="contact-form" id="contact-form">
                     <div class="form-group">
                         <label for="name">Your Name...</label>
                         <input type="text" id="name" name="name" required>
