@@ -425,6 +425,7 @@ section#projects.section {
     aspect-ratio: 1;
     position: relative;
     overflow: hidden;
+    min-height: 100%;
 }
 
 .about-image-square .about-image {
