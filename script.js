@@ -581,15 +581,20 @@ if (aboutImageSquare && aboutImagesSlider && aboutSection) {
     let touchStartY = 0;
     let touchStartScrollDelta = 0;
     let touchStartTime = 0;
+    let isTouchingSlider = false;
     
-    window.addEventListener('touchstart', (e) => {
+    // Add touch event listeners directly to the image square for better mobile interaction
+    aboutImageSquare.addEventListener('touchstart', (e) => {
         const imageSquareRect = aboutImageSquare.getBoundingClientRect();
         const windowHeight = window.innerHeight;
         const isInViewport = imageSquareRect.top < windowHeight && imageSquareRect.bottom > 0;
         
         if (isInViewport) {
+            isTouchingSlider = true;
             const centered = checkIfCentered();
-            if (centered && !isLocked) {
+            // Lock if centered or close to center (more lenient on mobile)
+            const distanceFromCenter = Math.abs(imageSquareRect.top - (windowHeight - imageSquareRect.height) / 2);
+            if ((centered || distanceFromCenter < windowHeight * 0.2) && !isLocked) {
                 lockScroll();
                 const threshold = getScrollThreshold();
                 const sensitivity = getScrollSensitivity();
@@ -600,35 +605,65 @@ if (aboutImageSquare && aboutImagesSlider && aboutSection) {
                 touchStartY = e.touches[0].clientY;
                 touchStartScrollDelta = scrollDelta;
                 touchStartTime = Date.now();
+                e.preventDefault(); // Prevent scrolling when interacting with slider
             }
-        }
-    }, { passive: true });
-    
-    window.addEventListener('touchmove', (e) => {
-        if (isLocked) {
-            e.preventDefault();
-            const touchCurrentY = e.touches[0].clientY;
-            const delta = touchStartY - touchCurrentY;
-            const threshold = getScrollThreshold();
-            const sensitivity = getScrollSensitivity();
-            scrollDelta = touchStartScrollDelta + (delta * 2);
-            
-            const newProgress = Math.max(0, Math.min(1, (scrollDelta * sensitivity) / threshold));
-            updateImageSlider(newProgress, false);
-            
-            const state = {
-                isAtStart: newProgress <= 0.001,
-                isAtEnd: newProgress >= 0.999
-            };
-            
-            if (state.isAtEnd || state.isAtStart) {
-                unlockScroll();
-            }
-            
-            touchStartY = touchCurrentY;
-            touchStartScrollDelta = scrollDelta;
         }
     }, { passive: false });
+    
+    aboutImageSquare.addEventListener('touchmove', (e) => {
+        if (isTouchingSlider) {
+            const imageSquareRect = aboutImageSquare.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const isInViewport = imageSquareRect.top < windowHeight && imageSquareRect.bottom > 0;
+            
+            if (isInViewport) {
+                // Lock if not already locked and in viewport
+                if (!isLocked) {
+                    lockScroll();
+                    const threshold = getScrollThreshold();
+                    const sensitivity = getScrollSensitivity();
+                    scrollDelta = currentProgress * threshold / sensitivity;
+                    touchStartScrollDelta = scrollDelta;
+                }
+                
+                if (isLocked) {
+                    e.preventDefault();
+                    const touchCurrentY = e.touches[0].clientY;
+                    const delta = touchStartY - touchCurrentY;
+                    const threshold = getScrollThreshold();
+                    const sensitivity = getScrollSensitivity();
+                    scrollDelta = touchStartScrollDelta + (delta * 3); // Increased sensitivity for mobile
+                    
+                    const newProgress = Math.max(0, Math.min(1, (scrollDelta * sensitivity) / threshold));
+                    updateImageSlider(newProgress, false);
+                    
+                    const state = {
+                        isAtStart: newProgress <= 0.001,
+                        isAtEnd: newProgress >= 0.999
+                    };
+                    
+                    // Don't unlock immediately on mobile - let user continue swiping
+                    if ((state.isAtEnd && delta < 0) || (state.isAtStart && delta > 0)) {
+                        // Only unlock if trying to scroll past boundaries
+                        unlockScroll();
+                    }
+                    
+                    touchStartY = touchCurrentY;
+                    touchStartScrollDelta = scrollDelta;
+                }
+            }
+        }
+    }, { passive: false });
+    
+    aboutImageSquare.addEventListener('touchend', (e) => {
+        isTouchingSlider = false;
+        // Keep locked briefly, then unlock if at boundaries
+        setTimeout(() => {
+            if (isLocked && (currentProgress <= 0.001 || currentProgress >= 0.999)) {
+                unlockScroll();
+            }
+        }, 300);
+    }, { passive: true });
     
     // Initialize - show first image
     updateImageSlider(0, true);
