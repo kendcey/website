@@ -1446,7 +1446,8 @@ div[style*="display: flex"] .resume-btn:hover {
     cursor: pointer;
 }
 
-.work-image img {
+.work-image img,
+.work-image video {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -1461,13 +1462,41 @@ div[style*="display: flex"] .resume-btn:hover {
     background-color: #E0DFDE;
 }
 
-.work-item:hover .work-image img {
+.skipper-and-sons-project .work-image img {
+    object-position: center 30%;
+    transform: scale(1.1);
+}
+
+.nut-bar-project .work-image {
+    padding: 20px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nut-bar-project .work-image img {
+    object-fit: contain;
+    object-position: center;
+    width: 90%;
+    height: 90%;
+    display: block;
+    margin-left: -35px;
+}
+
+.work-item:hover .work-image img,
+.work-item:hover .work-image video {
     transform: scale(1.1);
     filter: grayscale(0%);
     transition: transform 0.3s ease, filter 3s ease;
 }
 
-.work-item:not(:hover) .work-image img {
+.skipper-and-sons-project:hover .work-image img {
+    transform: scale(1.21);
+}
+
+.work-item:not(:hover) .work-image img,
+.work-item:not(:hover) .work-image video {
     transition: transform 0.3s ease, filter 0.5s ease;
 }
 
