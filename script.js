@@ -121,20 +121,13 @@ if (hamburger && navLinks && navbar) {
     });
 }
 
-// Initialize EmailJS
-(function() {
-    emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your EmailJS public key
-})();
-
-// Handle contact form submission
+// Handle contact form submission with FormSubmit
 const contactForm = document.querySelector('.contact-form');
 const successMessage = document.getElementById('successMessage');
 const errorMessage = document.getElementById('errorMessage');
 
 if (contactForm) {
     contactForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent default form submission
-
         // Clear any existing messages
         successMessage.classList.remove('show');
         successMessage.textContent = '';
@@ -151,6 +144,7 @@ if (contactForm) {
 
         // Basic validation
         if (!name || !email || !message || !validateEmail(email)) {
+            e.preventDefault();
             errorMessage.textContent = 'Please fill in all fields correctly.';
             errorMessage.classList.add('show');
 
@@ -168,51 +162,67 @@ if (contactForm) {
         sendButton.textContent = 'Sending...';
         sendButton.disabled = true;
 
-        // EmailJS template parameters
-        const templateParams = {
-            from_name: name,
-            from_email: email,
-            message: message,
-            to_email: 'kendcey@icloud.com'
-        };
+        // FormSubmit will handle the submission
+        // Set up success redirect to show message on same page
+        const currentUrl = window.location.href.split('#')[0];
+        const nextInput = contactForm.querySelector('input[name="_next"]');
+        if (nextInput) {
+            nextInput.value = currentUrl + '#contact?success=true';
+        }
 
-        // Send email using EmailJS
-        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
-            .then(function(response) {
-                // Display success message
+        // Allow form to submit naturally
+        // FormSubmit will redirect back, so we'll check for success parameter
+        setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'true') {
                 successMessage.textContent = 'Message sent successfully!';
                 successMessage.classList.add('show');
-
+                
                 // Clear form fields
                 nameInput.value = '';
                 emailInput.value = '';
                 messageInput.value = '';
-
+                
                 // Reset button
                 sendButton.textContent = originalButtonText;
                 sendButton.disabled = false;
-
+                
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname + '#contact');
+                
                 // Hide message after 5 seconds
                 setTimeout(() => {
                     successMessage.classList.remove('show');
                     successMessage.textContent = '';
                 }, 5000);
-            })
-            .catch(function(error) {
-                // Display error message
-                errorMessage.textContent = 'Failed to send message. Please try again or contact directly at kendcey@icloud.com';
-                errorMessage.classList.add('show');
-
-                // Reset button
-                sendButton.textContent = originalButtonText;
-                sendButton.disabled = false;
-
-                // Hide message after 5 seconds
-                setTimeout(() => {
-                    errorMessage.classList.remove('show');
-                    errorMessage.textContent = '';
-                }, 5000);
-            });
+            }
+        }, 100);
+    });
+    
+    // Check for success parameter on page load
+    window.addEventListener('load', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true' && successMessage) {
+            successMessage.textContent = 'Message sent successfully!';
+            successMessage.classList.add('show');
+            
+            // Clear form if it exists
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const messageInput = document.getElementById('message');
+            if (nameInput) nameInput.value = '';
+            if (emailInput) emailInput.value = '';
+            if (messageInput) messageInput.value = '';
+            
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname + '#contact');
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+                successMessage.textContent = '';
+            }, 5000);
+        }
     });
 }
 
