@@ -20,6 +20,7 @@ html {
     overflow-y: auto; /* Allow html to scroll to accommodate content outside wrapper */
     overflow-x: hidden;
     width: 100%; /* Ensure html takes full width */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 body {
@@ -30,6 +31,8 @@ body {
     color: #000000;
     overflow: visible;
     width: 100%; /* Ensure body takes full width */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    touch-action: pan-y; /* Allow vertical scrolling */
 }
 
 body.no-scroll {
@@ -396,6 +399,8 @@ section#projects.section {
     background-color: #E0DFDE;
     overflow: hidden;
     position: relative;
+    touch-action: pan-y; /* Allow vertical scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Responsive sizing for larger screens */

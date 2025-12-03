@@ -347,42 +347,28 @@ if (backToTopBtn) {
     });
 }
 
-// Scroll-locked image slider within the about-image-square
+// Looping roll-up animation for about images
 const aboutImageSquare = document.querySelector('.about-image-square');
 const aboutImagesSlider = document.querySelector('.about-images-slider');
-const aboutSection = document.getElementById('about');
 
-if (aboutImageSquare && aboutImagesSlider && aboutSection) {
+if (aboutImageSquare && aboutImagesSlider) {
     const imageSlides = document.querySelectorAll('.image-slide');
     const numImages = imageSlides.length;
-    let isLocked = false;
-    let scrollDelta = 0;
-    let currentProgress = 0;
-    let targetProgress = 0;
-    let isCentering = false;
-    let rafId = null;
-    let lastScrollTime = 0;
     
-    // Responsive scroll sensitivity based on screen size
-    function getScrollSensitivity() {
-        const isMobile = window.innerWidth <= 768;
-        return isMobile ? 1.5 : 1.2; // More sensitive on mobile
+    // Clone the first image and append it at the end for seamless loop
+    if (imageSlides.length > 0) {
+        const firstSlide = imageSlides[0].cloneNode(true);
+        const firstDivider = document.querySelector('.image-divider');
+        if (firstDivider) {
+            const dividerClone = firstDivider.cloneNode(true);
+            aboutImagesSlider.appendChild(dividerClone);
+        }
+        aboutImagesSlider.appendChild(firstSlide);
     }
     
-    function getScrollThreshold() {
-        const isMobile = window.innerWidth <= 768;
-        return isMobile ? 1200 : 1500; // Lower threshold on mobile
-    }
-    
-    // Responsive center threshold based on screen size
-    function getCenterThreshold() {
-        const windowHeight = window.innerHeight;
-        const isMobile = window.innerWidth <= 768;
-        // Use very small threshold for precise centering
-        return isMobile ? Math.max(8, windowHeight * 0.015) : Math.max(5, windowHeight * 0.01);
-    }
-    
-    const SMOOTH_FACTOR = 0.15;
+    let animationId = null;
+    const animationDuration = 3000; // 3 seconds per image
+    let startTime = null;
     
     function getSlideHeight() {
         return aboutImageSquare.offsetHeight;
@@ -390,320 +376,46 @@ if (aboutImageSquare && aboutImagesSlider && aboutSection) {
     
     function getTotalHeight() {
         const slideHeight = getSlideHeight();
-        return slideHeight * numImages + (numImages - 1) - 7; // Subtract 7px to fix bottom spacing
+        // Now we have numImages + 1 slides (including duplicate first)
+        return slideHeight * (numImages + 1) + numImages - 7;
     }
     
-    function snapToImage(progress) {
-        // Calculate snap points for each image
-        const snapPoints = [];
-        for (let i = 0; i < numImages; i++) {
-            snapPoints.push(i / (numImages - 1));
-        }
-        
-        // Find nearest snap point
-        let nearestSnap = progress;
-        let minDistance = Infinity;
-        
-        for (let snapPoint of snapPoints) {
-            const distance = Math.abs(progress - snapPoint);
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestSnap = snapPoint;
-            }
-        }
-        
-        // Light snap: only snap if close enough (within 15% of image distance)
-        const snapThreshold = 1 / (numImages * 2) * 0.5; // 50% of half the distance between images
-        if (minDistance < snapThreshold) {
-            // Smoothly interpolate towards snap point
-            const snapStrength = 0.5; // Stronger snap strength
-            return progress + (nearestSnap - progress) * snapStrength;
-        }
-        
-        return progress;
-    }
-    
-    function updateImageSlider(progress, immediate = false) {
-        targetProgress = Math.max(0, Math.min(1, progress));
-        
-        // Apply light snap effect
-        if (!immediate) {
-            targetProgress = snapToImage(targetProgress);
-        }
-        
-        if (immediate) {
-            currentProgress = targetProgress;
-        } else {
-            // Smooth interpolation for snappy feel
-            currentProgress += (targetProgress - currentProgress) * SMOOTH_FACTOR;
-            
-            // Stop animation when close enough
-            if (Math.abs(targetProgress - currentProgress) < 0.001) {
-                currentProgress = targetProgress;
-            }
-        }
-        
+    function updateSlider(progress) {
         const slideHeight = getSlideHeight();
         const totalHeight = getTotalHeight();
         const maxTranslate = totalHeight - slideHeight;
-        const translateY = currentProgress * maxTranslate;
-        
+        const translateY = progress * maxTranslate;
         aboutImagesSlider.style.transform = `translateY(-${translateY}px)`;
-        
-        return {
-            isAtStart: currentProgress <= 0.001,
-            isAtEnd: currentProgress >= 0.999
-        };
     }
     
-    function animateSlider() {
-        if (isLocked) {
-            updateImageSlider(targetProgress);
-            rafId = requestAnimationFrame(animateSlider);
+    function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        let elapsed = timestamp - startTime;
+        
+        // Total duration for one complete loop (all images + duplicate first)
+        const totalLoopDuration = animationDuration * (numImages + 1);
+        
+        // Check if we've completed a full loop
+        if (elapsed >= totalLoopDuration) {
+            // Reset to start seamlessly (duplicate first = real first, so no jump)
+            elapsed = elapsed % totalLoopDuration;
+            startTime = timestamp - elapsed;
         }
+        
+        // Calculate progress through the loop (0 to 1)
+        const loopProgress = elapsed / totalLoopDuration;
+        
+        updateSlider(loopProgress);
+        
+        animationId = requestAnimationFrame(animate);
     }
     
-    function lockScroll() {
-        if (!isLocked) {
-            isLocked = true;
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-            const threshold = getScrollThreshold();
-            const sensitivity = getScrollSensitivity();
-            scrollDelta = currentProgress * threshold / sensitivity;
-            rafId = requestAnimationFrame(animateSlider);
-        }
-    }
+    // Start animation
+    animationId = requestAnimationFrame(animate);
     
-    function unlockScroll() {
-        if (isLocked) {
-            isLocked = false;
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-            if (rafId) {
-                cancelAnimationFrame(rafId);
-                rafId = null;
-            }
-        }
-    }
-    
-    function checkIfCentered() {
-        const imageSquareRect = aboutImageSquare.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const squareHeight = imageSquareRect.height;
-        const squareTop = imageSquareRect.top;
-        const targetTop = (windowHeight - squareHeight) / 2;
-        const threshold = getCenterThreshold();
-        const distanceFromCenter = Math.abs(squareTop - targetTop);
-        
-        // Only return true if very close to center (stricter threshold)
-        return distanceFromCenter < threshold;
-    }
-    
-    function handleWheel(e) {
-        const now = Date.now();
-        const imageSquareRect = aboutImageSquare.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const squareTop = imageSquareRect.top;
-        const squareBottom = imageSquareRect.bottom;
-        const isInViewport = squareTop < windowHeight && squareBottom > 0;
-        
-        // If not in viewport and locked, unlock
-        if (!isInViewport) {
-            if (isLocked) {
-                unlockScroll();
-            }
-            return;
-        }
-        
-        // Throttle wheel events slightly
-        if (now - lastScrollTime < 8) {
-            return;
-        }
-        lastScrollTime = now;
-        
-        const centered = checkIfCentered();
-        
-        // If centered but not locked, lock it (no auto-centering)
-        if (centered && !isLocked) {
-            lockScroll();
-            const threshold = getScrollThreshold();
-            const sensitivity = getScrollSensitivity();
-            scrollDelta = currentProgress * threshold / sensitivity;
-        }
-        
-        // If locked, handle image movement
-        if (isLocked) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const delta = e.deltaY || 0;
-            const threshold = getScrollThreshold();
-            const sensitivity = getScrollSensitivity();
-            scrollDelta += delta;
-            
-            // Calculate target progress
-            const newProgress = Math.max(0, Math.min(1, (scrollDelta * sensitivity) / threshold));
-            updateImageSlider(newProgress, false);
-            
-            const state = {
-                isAtStart: newProgress <= 0.001,
-                isAtEnd: newProgress >= 0.999
-            };
-            
-            // Check if we should unlock
-            if (delta > 0 && state.isAtEnd) {
-                // Scrolling down and at end
-                unlockScroll();
-                const extraScroll = Math.max(0, (scrollDelta * sensitivity - threshold) / sensitivity);
-                if (extraScroll > 10) {
-                    setTimeout(() => {
-                        window.scrollBy(0, extraScroll);
-                    }, 50);
-                }
-            } else if (delta < 0 && state.isAtStart) {
-                // Scrolling up and at start
-                unlockScroll();
-                const extraScroll = Math.min(0, scrollDelta * sensitivity / sensitivity);
-                if (extraScroll < -10) {
-                    setTimeout(() => {
-                        window.scrollBy(0, extraScroll);
-                    }, 50);
-                }
-            }
-        }
-    }
-    
-    // Handle wheel events
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    
-    // Handle touch events for mobile
-    let touchStartY = 0;
-    let touchStartScrollDelta = 0;
-    let touchStartTime = 0;
-    let isTouchingSlider = false;
-    
-    // Add touch event listeners directly to the image square for better mobile interaction
-    aboutImageSquare.addEventListener('touchstart', (e) => {
-        const imageSquareRect = aboutImageSquare.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const isInViewport = imageSquareRect.top < windowHeight && imageSquareRect.bottom > 0;
-        
-        if (isInViewport) {
-            isTouchingSlider = true;
-            const centered = checkIfCentered();
-            // Lock if centered or close to center (more lenient on mobile)
-            const distanceFromCenter = Math.abs(imageSquareRect.top - (windowHeight - imageSquareRect.height) / 2);
-            if ((centered || distanceFromCenter < windowHeight * 0.2) && !isLocked) {
-                lockScroll();
-                const threshold = getScrollThreshold();
-                const sensitivity = getScrollSensitivity();
-                scrollDelta = currentProgress * threshold / sensitivity;
-            }
-            
-            if (isLocked) {
-                touchStartY = e.touches[0].clientY;
-                touchStartScrollDelta = scrollDelta;
-                touchStartTime = Date.now();
-                e.preventDefault(); // Prevent scrolling when interacting with slider
-            }
-        }
-    }, { passive: false });
-    
-    aboutImageSquare.addEventListener('touchmove', (e) => {
-        if (isTouchingSlider) {
-            const imageSquareRect = aboutImageSquare.getBoundingClientRect();
-            const windowHeight = window.innerHeight;
-            const isInViewport = imageSquareRect.top < windowHeight && imageSquareRect.bottom > 0;
-            
-            if (isInViewport) {
-                // Lock if not already locked and in viewport
-                if (!isLocked) {
-                    lockScroll();
-                    const threshold = getScrollThreshold();
-                    const sensitivity = getScrollSensitivity();
-                    scrollDelta = currentProgress * threshold / sensitivity;
-                    touchStartScrollDelta = scrollDelta;
-                }
-                
-                if (isLocked) {
-                    e.preventDefault();
-                    const touchCurrentY = e.touches[0].clientY;
-                    const delta = touchStartY - touchCurrentY;
-                    const threshold = getScrollThreshold();
-                    const sensitivity = getScrollSensitivity();
-                    scrollDelta = touchStartScrollDelta + (delta * 3); // Increased sensitivity for mobile
-                    
-                    const newProgress = Math.max(0, Math.min(1, (scrollDelta * sensitivity) / threshold));
-                    updateImageSlider(newProgress, false);
-                    
-                    const state = {
-                        isAtStart: newProgress <= 0.001,
-                        isAtEnd: newProgress >= 0.999
-                    };
-                    
-                    // Don't unlock immediately on mobile - let user continue swiping
-                    if ((state.isAtEnd && delta < 0) || (state.isAtStart && delta > 0)) {
-                        // Only unlock if trying to scroll past boundaries
-                        unlockScroll();
-                    }
-                    
-                    touchStartY = touchCurrentY;
-                    touchStartScrollDelta = scrollDelta;
-                }
-            }
-        }
-    }, { passive: false });
-    
-    aboutImageSquare.addEventListener('touchend', (e) => {
-        isTouchingSlider = false;
-        // Keep locked briefly, then unlock if at boundaries
-        setTimeout(() => {
-            if (isLocked && (currentProgress <= 0.001 || currentProgress >= 0.999)) {
-                unlockScroll();
-            }
-        }, 300);
-    }, { passive: true });
-    
-    // Initialize - show first image
-    updateImageSlider(0, true);
-    
-    // Check on scroll to lock when naturally centered
-    let scrollCheckTimeout = null;
-    let lastScrollDirection = 0;
-    window.addEventListener('scroll', () => {
-        if (isLocked) return;
-        
-        // Track scroll direction
-        const currentScrollY = window.scrollY || window.pageYOffset;
-        const scrollDeltaY = currentScrollY - (window.lastScrollY || currentScrollY);
-        window.lastScrollY = currentScrollY;
-        lastScrollDirection = scrollDeltaY;
-        
-        // Debounce scroll checks
-        clearTimeout(scrollCheckTimeout);
-        scrollCheckTimeout = setTimeout(() => {
-            const imageSquareRect = aboutImageSquare.getBoundingClientRect();
-            const windowHeight = window.innerHeight;
-            const isInViewport = imageSquareRect.top < windowHeight && imageSquareRect.bottom > 0;
-            
-            if (isInViewport) {
-                const centered = checkIfCentered();
-                // Only lock if centered AND has been stable (not actively scrolling past)
-                if (centered && !isLocked && Math.abs(lastScrollDirection) < 1) {
-                    lockScroll();
-                    const threshold = getScrollThreshold();
-                    const sensitivity = getScrollSensitivity();
-                    scrollDelta = currentProgress * threshold / sensitivity;
-                }
-            }
-        }, 100); // Increased debounce for more stability
-    }, { passive: true });
-    
+    // Handle window resize
     window.addEventListener('resize', () => {
-        if (isLocked) {
-            updateImageSlider(targetProgress, true);
-        }
+        // Animation will recalculate on next frame
     });
 }
 
